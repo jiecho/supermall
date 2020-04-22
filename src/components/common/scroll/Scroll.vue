@@ -41,31 +41,35 @@ export default {
       //监听上拉事件 true监听 false不监听
       pullUpLoad: this.pullUpLoad
     })),
-     //监听scroll： 监听滚动事件  监听滚动的位置 当滚轮到一定高度时 显示出返回顶部的图标
+      //监听scroll： 监听滚动事件  监听滚动的位置 当滚轮到一定高度时 显示出返回顶部的图标
       this.scroll.on("scroll", position => {
-      //把数据发出去一个事件 到Home组件中
-       this.$emit('scroll',position)
+        //把数据发出去一个事件 到Home组件中
+        this.$emit("scroll", position);
       });
     //pullingUp 监听上拉事件 只能监听一次上拉 如果要一直监听需要设置finishPullUp()
-     this.scroll.on('pullingUp', () =>{
-        this.$emit('pullingUp')
-     })
+    this.scroll.on("pullingUp", () => {
+      this.$emit("pullingUp");
+    });
   },
   methods: {
-    //time=500 默认500毫秒直接返回顶部 
+    //time=500 默认500毫秒直接返回顶部
     // this.scroll 保证不为空 以防万一 因为调用者时created()钩子函数 this.scroll可能会得到 undefined
     scrollTo(x, y, time = 500) {
       this.scroll && this.scroll.scrollTo(x, y, time);
     },
     //刷新监听上拉更多
     // this.scroll 保证不为空 以防万一 因为调用者时用created()钩子函数 this.scroll可能会得到 undefined
-    finishPullUp(){
-      this.scroll && this.scroll.finishPullUp()
+    finishPullUp() {
+      this.scroll && this.scroll.finishPullUp();
     },
     //刷新高度
     // this.scroll 保证不为空 以防万一 因为调用者时created()钩子函数 this.scroll可能会得到 undefined
-    refresh(){
-       this.scroll && this.scroll.refresh()
+    refresh() {
+      this.scroll && this.scroll.refresh();
+    },
+    //保存组件离开前的位置
+    getScrollY() {
+      return this.scroll ? this.scroll.y : 0;
     }
   }
 };

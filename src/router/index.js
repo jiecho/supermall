@@ -15,6 +15,7 @@ const Home = () => import('../views/home/Home.vue')
 const Care = () => import('../views/cart/Cart.vue')
 const Profile = () => import('../views/profile/Profile.vue')
 const Category = () => import('../views/category/Category.vue')
+const Detail = () => import('../views/detail/Detail.vue')
 //1.安装插件
 Vue.use(VueRouter)
 
@@ -24,6 +25,7 @@ const routes = [
   { path: '/care', name: '', component: Care },
   { path: '/profile', name: '', component: Profile },
   { path: '/category', name: '', component: Category },
+  { path: '/detail/:iid', name: '', component: Detail },
 ]
 
 //2.创建路由对象

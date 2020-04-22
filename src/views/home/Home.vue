@@ -3,6 +3,13 @@
     <nav-ber class="home-nav">
       <div slot="center">购物街</div>
     </nav-ber>
+    <tab-control
+      :tabControl="['流行','新款','精选']"
+      class="tab-control"
+      @controlClick="controlClick"
+      ref="tabControl1"
+      v-show="isTabFixed"
+    ></tab-control>
     <scroll
       class="content"
       ref="scroll"
@@ -11,10 +18,10 @@
       :pullUpLoad="true"
       @pullingUp="pullingUp"
     >
-      <home-swiper :banners="banners"></home-swiper>
+      <home-swiper :banners="banners" @imageLoad="imageLoadSwiper"></home-swiper>
       <recommend-view :recommends="recommends"></recommend-view>
       <feature-view></feature-view>
-      <tab-control :tabControl="['流行','新款','精选']" class="tab-control" @controlClick="controlClick"></tab-control>
+      <tab-control :tabControl="['流行','新款','精选']" @controlClick="controlClick" ref="tabControl2"></tab-control>
       <goods-list :goods="showGoods"></goods-list>
     </scroll>
     <!-- 组件不可以直接监听click  需要.native修饰符 -->
@@ -31,10 +38,12 @@ import GoodsList from "components/content/goods/GoodsList";
 import BackTop from "components/content/backTop/BackTop";
 
 import { getHomeMultidata, getHomeGoods } from "network/home";
+import { debounce } from "common/utils";
 
 import HomeSwiper from "views/home/childComps/HomeSwiper";
 import RecommendView from "views/home/childComps/RecommendView";
 import FeatureView from "views/home/childComps/FeatureView";
+
 export default {
   data() {
     return {
@@ -49,7 +58,10 @@ export default {
         sell: { page: 0, list: [] }
       },
       currentType: "pop",
-      isShow: false
+      isShow: false,
+      tabOffsetTop: 0,
+      isTabFixed: false,
+      saveY: 0
     };
   },
   components: {
@@ -70,20 +82,31 @@ export default {
     this.getHomeGoods("pop");
     this.getHomeGoods("new");
     this.getHomeGoods("sell");
-
-        //监听图片加载完成
-    this.$bus.$on("itemImageLoad", () => {
-     this.$refs.scroll.refresh()
-      
-    });
   },
   mounted() {
-
+    //监听图片加载完成  使用防抖动函数更有效率更高 因为不使用图片有多少个就刷新多少次 使用防抖基本只要刷新一次
+    // 了解节流函数？
+    const refresh = debounce(this.$refs.scroll.refresh, 1);
+    this.$bus.$on("itemImageLoad", () => {
+      refresh();
+    });
   },
   computed: {
     showGoods() {
       return this.goods[this.currentType].list;
     }
+  },
+  //组件活跃时调用
+  activated(){
+    this.$refs.scroll.scrollTo(0, this.saveY,0);
+    //最好进行刷新一下
+    this.$refs.scroll.refresh()
+  },
+  //组件离开前调用
+  deactivated () {
+    //保存组件离开前的位置
+    this.saveY = this.$refs.scroll.getScrollY();
+    
   },
   methods: {
     //事件监听相关方法
@@ -99,6 +122,8 @@ export default {
           this.currentType = "sell";
           break;
       }
+      this.$refs.tabControl1.currentcount = index
+      this.$refs.tabControl2.currentcount = index
     },
     backClick() {
       // this.$refs.scroll 拿到scroll组件
@@ -110,10 +135,25 @@ export default {
     scroll(position) {
       //当高度小于-1000时显示返回顶部的图标 否则不显示
       this.isShow = position.y < -1000;
+
+      //决定tabControl是否吸顶
+      if (position.y < -this.tabOffsetTop) {
+        this.isTabFixed = true;
+      }else{
+        this.isTabFixed = false;
+      }
     },
     //监听上拉方法
     pullingUp() {
       this.getHomeGoods(this.currentType);
+    },
+    //监听轮播图图片加载完毕
+    imageLoadSwiper() {
+      // 获取 tabControl 的tabOffsetTop
+      // 所有组件都有有个$el：用于获取组件中的元素
+      // offsetTop: 元素到顶部的距离
+      //  console.log(this.$refs.tabControl2.$el.offsetTop);
+      this.tabOffsetTop = this.$refs.tabControl2.$el.offsetTop;
     },
 
     //网络请求相关的方法
@@ -173,7 +213,6 @@ export default {
 .home-nav {
   background-color: var(--color-tint);
   color: #fff;
-
   /*在使用浏览器原生滚动时, 为了让导航不跟随一起滚动*/
   /*position: fixed;*/
   /*left: 0;*/
